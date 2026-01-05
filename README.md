@@ -7,7 +7,7 @@ A comprehensive platform that simulates a production environment for Elasticsear
 
 - **Elasticsearch**: Stores and indexes logs
 - **Logstash**: Processes and enriches logs before indexing
-- **Kibana**: Visual analytics and dashboard (accessible at http://localhost:5601)
+- **Kibana**: Visual analytics and dashboard 
 - **FastAPI Backend**: REST API for log management and querying
 - **Log Generators**: Simulate various types of production logs
 - **Chaos Engine**: Simulates cluster failures and security incidents for testing
