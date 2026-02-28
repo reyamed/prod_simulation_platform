@@ -1,0 +1,49 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Frontend
+node_modules/
+dist/
+dist-ssr/
+.vite/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Logs
+logstash/pipeline/*.log
+*.log
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.code-workspace
+.DS_Store
