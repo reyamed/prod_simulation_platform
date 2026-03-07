@@ -2,6 +2,7 @@ import time
 import json
 import socket
 import random
+import os
 from faker import Faker
 from elasticsearch import Elasticsearch
 from app.database import SessionLocal

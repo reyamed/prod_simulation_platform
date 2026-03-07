@@ -55,6 +55,9 @@ class Ticket(TicketBase):
     
     model_config = ConfigDict(from_attributes=True)
 
+class TicketValidationRequest(BaseModel):
+    ticket_id: int
+
 # Auth Schemas
 class Token(BaseModel):
     access_token: str
