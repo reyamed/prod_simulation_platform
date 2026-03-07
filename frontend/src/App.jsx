@@ -1,6 +1,49 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const TicketItem = ({ ticket, handleValidate }) => {
+// --- Framer Motion Animation Variants ---
+const fadeIn = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+    transition: { duration: 0.2 },
+};
+
+const slideUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 20 },
+    transition: { duration: 0.3, ease: 'easeOut' },
+};
+
+const scaleOnHover = {
+    whileHover: { scale: 1.02 },
+    whileTap: { scale: 0.98 },
+    transition: { type: 'spring', stiffness: 400, damping: 17 },
+};
+
+const ToastNotification = ({ notification }) => {
+    if (!notification) return null;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-md border ${notification.type === 'success'
+                ? 'bg-status-success/20 border-status-success text-status-success'
+                : 'bg-status-error/20 border-status-error text-status-error'
+                }`}
+        >
+            <div className="flex items-center gap-3">
+                <span className="text-xl">{notification.type === 'success' ? '🏆' : '⚠️'}</span>
+                <span className="font-semibold">{notification.message}</span>
+            </div>
+        </motion.div>
+    );
+};
+
+export const TicketItem = React.forwardRef(({ ticket, handleValidate, handleSkip, isSkipping }, ref) => {
     const [hintIndex, setHintIndex] = useState(0);
 
     let hints = [];
@@ -19,74 +62,93 @@ const TicketItem = ({ ticket, handleValidate }) => {
     };
 
     return (
-        <div style={{
-            border: '1px solid #ddd',
-            borderLeft: '5px solid #d93f3c',
-            borderRadius: '8px',
-            padding: '1.5rem',
-            marginBottom: '1rem',
-            backgroundColor: 'white',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-        }}>
-            <h3 style={{ marginTop: 0 }}>{ticket.subject}</h3>
-            <p><strong>From:</strong> {ticket.sender_name}</p>
-            <p style={{ fontStyle: 'italic', backgroundColor: '#f9f9f9', padding: '1rem', borderRadius: '4px', border: '1px solid #eee' }}>
+        <motion.div
+            ref={ref}
+            className="glass-panel p-6 mb-6 rounded-xl border-l-4 border-l-status-error shadow-lg"
+            variants={slideUp}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            layout
+        >
+            <h3 className="mt-0 mb-2 text-xl font-semibold text-text-primary">{ticket.subject}</h3>
+            <p className="text-text-secondary text-sm mb-4"><strong>From:</strong> {ticket.sender_name}</p>
+            <div className="italic bg-neutral-bg3/50 p-4 rounded-md border border-border text-text-primary/90">
                 "{ticket.body}"
-            </p>
+            </div>
 
-            <div style={{ marginTop: '1.5rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+            <div className="mt-6 border-t border-border pt-4">
                 {hints && hints.length > 0 && (
-                    <div style={{ marginBottom: '1.5rem' }}>
+                    <div className="mb-6">
                         {hintIndex === 0 ? (
-                            <button onClick={handleRevealHint} style={{ background: '#f0ad4e', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                            <motion.button
+                                {...scaleOnHover}
+                                onClick={handleRevealHint}
+                                className="bg-status-warning/90 hover:bg-status-warning text-white border-none py-2 px-4 rounded-md cursor-pointer text-sm font-bold shadow-lg transition-colors"
+                            >
                                 💡 Need a hint?
-                            </button>
+                            </motion.button>
                         ) : (
-                            <>
-                                <h4 style={{ margin: '0 0 0.5rem 0', color: '#666' }}>Hints ({Math.min(hintIndex, hints.length)} / {hints.length})</h4>
-                                {hints.slice(0, hintIndex).map((hint, idx) => {
-                                    // Parse markdown link [text](url) format simply for hints
-                                    const linkMatch = hint.match(/\[(.*?)\]\((.*?)\)/);
-                                    if (linkMatch) {
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+                                <h4 className="m-0 text-text-muted text-sm uppercase tracking-wider font-semibold">
+                                    Hints ({Math.min(hintIndex, hints.length)} / {hints.length})
+                                </h4>
+                                <AnimatePresence>
+                                    {hints.slice(0, hintIndex).map((hint, idx) => {
+                                        const linkMatch = hint.match(/\[(.*?)\]\((.*?)\)/);
                                         return (
-                                            <div key={idx} style={{ padding: '0.75rem', backgroundColor: '#fffbe6', border: '1px solid #ffe58f', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                                                💡 <a href={linkMatch[2]} target="_blank" rel="noreferrer" style={{ color: '#005571', fontWeight: 'bold' }}>{linkMatch[1]}</a>
-                                            </div>
-                                        )
-                                    }
-                                    return (
-                                        <div key={idx} style={{ padding: '0.75rem', backgroundColor: '#fffbe6', border: '1px solid #ffe58f', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                                            💡 {hint}
-                                        </div>
-                                    )
-                                })}
+                                            <motion.div
+                                                key={idx}
+                                                variants={fadeIn}
+                                                initial="initial"
+                                                animate="animate"
+                                                className="p-3 bg-brand-subtle border border-brand/30 rounded-md text-sm text-text-primary"
+                                            >
+                                                💡 {linkMatch ? (
+                                                    <a href={linkMatch[2]} target="_blank" rel="noreferrer" className="text-brand-light font-bold hover:underline">{linkMatch[1]}</a>
+                                                ) : hint}
+                                            </motion.div>
+                                        );
+                                    })}
+                                </AnimatePresence>
                                 {hintIndex < hints.length && (
-                                    <button onClick={handleRevealHint} style={{ background: 'transparent', border: '1px dashed #ccc', color: '#666', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                                    <motion.button
+                                        {...scaleOnHover}
+                                        onClick={handleRevealHint}
+                                        className="bg-transparent border border-dashed border-text-muted text-text-secondary py-2 px-4 rounded-md cursor-pointer text-sm mt-3 hover:bg-white/5 hover:text-text-primary transition-colors"
+                                    >
                                         Reveal Next Hint
-                                    </button>
+                                    </motion.button>
                                 )}
-                            </>
+                            </motion.div>
                         )}
                     </div>
                 )}
 
-                <button
-                    onClick={() => handleValidate()}
-                    style={{
-                        backgroundColor: '#005571',
-                        color: 'white',
-                        border: 'none',
-                        padding: '0.75rem 1.5rem',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold'
-                    }}>
-                    Verify Resolution
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-6">
+                    <motion.button
+                        {...scaleOnHover}
+                        onClick={() => handleValidate()}
+                        className="bg-brand hover:bg-brand-hover text-white border-none py-3 px-6 rounded-md cursor-pointer font-bold transition-colors shadow-glow flex-1 sm:flex-none"
+                    >
+                        Verify Resolution
+                    </motion.button>
+                    {ticket.status === 'open' && (
+                        <motion.button
+                            {...scaleOnHover}
+                            onClick={() => handleSkip()}
+                            disabled={isSkipping}
+                            className={`bg-transparent border border-text-muted hover:border-text-primary text-text-secondary hover:text-text-primary py-3 px-6 rounded-md cursor-pointer font-bold transition-colors flex-1 sm:flex-none ${isSkipping ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            {isSkipping ? 'Skipping...' : 'Skip Stage ⏭️'}
+                        </motion.button>
+                    )}
+                </div>
             </div>
-        </div>
+        </motion.div>
     );
-};
+});
+TicketItem.displayName = 'TicketItem';
 
 function App() {
     const [token, setToken] = useState(localStorage.getItem('token') || null);
@@ -100,6 +162,14 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'admin'
     const [adminStats, setAdminStats] = useState(null);
+    const [notification, setNotification] = useState(null);
+    const [selectedTicketId, setSelectedTicketId] = useState(null);
+    const [isSkipping, setIsSkipping] = useState(false);
+
+    const showNotification = (type, message) => {
+        setNotification({ type, message });
+        setTimeout(() => setNotification(null), 5000);
+    };
 
     useEffect(() => {
         if (token) {
@@ -211,144 +281,377 @@ function App() {
         setToken(null);
         localStorage.removeItem('token');
         setTickets([]);
+        setCurrentView('dashboard');
     };
 
     const handleValidate = () => {
+        if (!activeTicket) return;
         fetch('http://localhost:8000/game/validate', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ticket_id: activeTicket.id })
         })
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert("Awesome! " + data.message);
+                    showNotification('success', "Awesome! " + data.message);
                     fetchTickets();
                 } else {
-                    alert("Validation Failed: " + data.message);
+                    showNotification('error', "Validation Failed: " + data.message);
                 }
             })
             .catch(err => {
                 console.error("Validation error:", err);
-                alert("An error occurred during validation.");
+                showNotification('error', "An error occurred during validation.");
             });
     };
 
+    const handleSkip = () => {
+        if (!activeTicket) return;
+        if (!window.confirm("Are you sure you want to skip this stage? You won't receive points for it.")) return;
+        setIsSkipping(true);
+        fetch('http://localhost:8000/game/skip', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ ticket_id: activeTicket.id })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('success', data.message);
+                    setTickets([]); // forcefully clear to trigger animation out
+                    fetchTickets();
+                } else {
+                    showNotification('error', "Skip Failed: " + data.message);
+                }
+            })
+            .catch(err => {
+                console.error("Skip error:", err);
+                showNotification('error', "An error occurred during skip.");
+            })
+            .finally(() => {
+                setIsSkipping(false);
+            });
+    };
+
+    const openTickets = tickets.filter(t => t.status === 'open');
+    const resolvedTickets = tickets.filter(t => t.status !== 'open');
+    const activeTicket = tickets.find(t => t.id === selectedTicketId) || (openTickets.length > 0 ? openTickets[0] : (resolvedTickets.length > 0 ? resolvedTickets[0] : null));
+
+    // --- RENDER LOGIN FLOW ---
     if (!token) {
         return (
-            <div style={{ padding: '2rem', maxWidth: '400px', margin: '4rem auto', fontFamily: 'sans-serif', textAlign: 'center', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f9f9f9' }}>
-                <h1 style={{ color: '#005571', marginBottom: '0.5rem' }}>Elastic Simulator</h1>
-                <h2 style={{ fontSize: '1.2rem', marginBottom: '2rem', color: '#555' }}>{isRegistering ? "Register Account" : "Player Login"}</h2>
-                {authError && <p style={{ color: 'red', backgroundColor: '#fee', padding: '0.5rem', borderRadius: '4px' }}>{authError}</p>}
-                <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {isRegistering && (
-                        <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }} />
-                    )}
-                    <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }} />
-                    <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required style={{ padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }} />
-                    <button type="submit" style={{ padding: '0.75rem', backgroundColor: '#00bfb3', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', borderRadius: '4px', fontSize: '1rem', marginTop: '0.5rem' }}>
-                        {isRegistering ? "Sign Up" : "Login"}
-                    </button>
-                </form>
-                <p style={{ marginTop: '1.5rem', cursor: 'pointer', color: '#005571', fontWeight: 'bold' }} onClick={() => setIsRegistering(!isRegistering)}>
-                    {isRegistering ? "Already have an account? Login here." : "Need an account? Register here."}
-                </p>
+            <div className="flex items-center justify-center min-h-screen p-4 inset-0 fixed relative overflow-hidden">
+                <div className="absolute w-[800px] h-[800px] bg-brand-light/10 blur-[100px] rounded-full -top-40 -left-20 mix-blend-screen pointer-events-none"></div>
+                <div className="absolute w-[600px] h-[600px] bg-blue-500/10 blur-[100px] rounded-full bottom-0 right-0 mix-blend-screen pointer-events-none"></div>
+
+                <motion.div
+                    variants={slideUp}
+                    initial="initial"
+                    animate="animate"
+                    className="glass-card p-10 max-w-md w-full relative z-10"
+                >
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-light to-brand m-0 mb-2">
+                            Elastic Simulator
+                        </h1>
+                        <h2 className="text-lg font-medium text-text-secondary m-0">
+                            {isRegistering ? "Register Account" : "Player Login"}
+                        </h2>
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                        {authError && (
+                            <motion.div
+                                key="error"
+                                variants={fadeIn}
+                                initial="initial"
+                                animate="animate"
+                                exit="exit"
+                                className="bg-status-error/10 border border-status-error/20 text-status-error p-3 rounded-md mb-6 text-sm text-center font-medium"
+                            >
+                                {authError}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <form onSubmit={handleAuth} className="flex flex-col gap-5">
+                        <AnimatePresence>
+                            {isRegistering && (
+                                <motion.div
+                                    key="register-fields"
+                                    variants={slideUp}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="exit"
+                                >
+                                    <input
+                                        type="text"
+                                        placeholder="Username"
+                                        value={username}
+                                        onChange={e => setUsername(e.target.value)}
+                                        required
+                                        className="glass-input p-3 w-full rounded-md text-text-primary placeholder:text-text-muted outline-none transition-all box-border"
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        <input
+                            type="email"
+                            placeholder="Email Address"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            required
+                            className="glass-input p-3 rounded-md text-text-primary placeholder:text-text-muted outline-none transition-all w-full box-border"
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            required
+                            className="glass-input p-3 rounded-md text-text-primary placeholder:text-text-muted outline-none transition-all w-full box-border"
+                        />
+
+                        <motion.button
+                            {...scaleOnHover}
+                            type="submit"
+                            className="p-3 bg-brand hover:bg-brand-hover text-white border-none cursor-pointer font-bold rounded-md text-base mt-2 shadow-glow transition-colors"
+                        >
+                            {isRegistering ? "Sign Up" : "Login"}
+                        </motion.button>
+                    </form>
+
+                    <p
+                        className="mt-6 text-center cursor-pointer text-brand-light text-sm font-medium hover:text-brand-hover hover:underline transition-colors"
+                        onClick={() => {
+                            setIsRegistering(!isRegistering);
+                            setAuthError('');
+                        }}
+                    >
+                        {isRegistering ? "Already have an account? Login here." : "Need an account? Register here."}
+                    </p>
+                </motion.div>
             </div>
         );
     }
 
+    // --- RENDER MAIN GAME DASHBOARD ---
     return (
-        <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h1 style={{ color: '#005571' }}>Elastic Simulator Dashboard</h1>
-                <div>
-                    <button onClick={() => window.open('http://localhost:5601', '_blank')} style={{ padding: '0.5rem 1rem', background: '#e83e8c', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold', marginRight: '1rem' }}>
-                        Open Kibana ↗
-                    </button>
-                    <button onClick={() => {
-                        if (currentView === 'dashboard') {
-                            setCurrentView('admin');
-                            fetchAdminStats();
-                        } else {
-                            setCurrentView('dashboard');
-                        }
-                    }} style={{ padding: '0.5rem 1rem', background: '#00bfb3', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold', marginRight: '1rem' }}>
-                        {currentView === 'dashboard' ? 'Leaderboard' : 'Back to Game'}
-                    </button>
-                    <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', background: '#ccc', border: 'none', cursor: 'pointer', borderRadius: '4px', fontWeight: 'bold' }}>Logout</button>
-                </div>
-            </div>
+        <div className="p-4 sm:p-8 max-w-6xl mx-auto pb-20 relative">
+            <AnimatePresence>
+                {notification && <ToastNotification key="toast" notification={notification} />}
+            </AnimatePresence>
 
-            {currentView === 'admin' ? (
-                <div style={{ marginTop: '2rem' }}>
-                    <h2>Global Statistics</h2>
-                    {adminStats ? (
-                        <div>
-                            <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
-                                <div style={{ padding: '1rem', background: '#f0f4f8', borderRadius: '8px', minWidth: '150px', textAlign: 'center' }}>
-                                    <h3>Total Players</h3>
-                                    <p style={{ fontSize: '2rem', margin: '0', color: '#005571', fontWeight: 'bold' }}>{adminStats.total_players}</p>
+            <motion.div
+                className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+            >
+                <div>
+                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-light to-brand m-0 leading-tight">Elastic Simulator</h1>
+                    <p className="text-text-secondary m-0 mt-1">Production Diagnostics Training</p>
+                </div>
+                <div className="flex gap-3 flex-wrap">
+                    <motion.button
+                        {...scaleOnHover}
+                        onClick={() => window.open('http://localhost:5601', '_blank')}
+                        className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white border-none cursor-pointer rounded-md font-bold shadow-lg shadow-pink-500/20"
+                    >
+                        Open Kibana ↗
+                    </motion.button>
+                    <motion.button
+                        {...scaleOnHover}
+                        onClick={() => {
+                            if (currentView === 'dashboard') {
+                                setCurrentView('admin');
+                                fetchAdminStats();
+                            } else {
+                                setCurrentView('dashboard');
+                            }
+                        }}
+                        className="px-4 py-2 bg-neutral-bg3 hover:bg-neutral-bg4 border border-border text-white cursor-pointer rounded-md font-medium transition-colors"
+                    >
+                        {currentView === 'dashboard' ? 'Leaderboard' : 'Back to Game'}
+                    </motion.button>
+                    <motion.button
+                        {...scaleOnHover}
+                        onClick={handleLogout}
+                        className="px-4 py-2 bg-transparent hover:bg-white/10 border border-text-muted text-text-primary cursor-pointer rounded-md font-medium transition-colors"
+                    >
+                        Logout
+                    </motion.button>
+                </div>
+            </motion.div>
+
+            <AnimatePresence mode="wait">
+                {currentView === 'admin' ? (
+                    <motion.div
+                        key="admin"
+                        variants={slideUp}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className="mt-8"
+                    >
+                        <h2 className="text-2xl font-semibold mb-6">Global Statistics</h2>
+                        {adminStats ? (
+                            <div>
+                                <div className="flex flex-wrap gap-6 mb-8">
+                                    <div className="glass-card p-6 min-w-[200px] text-center border-t-4 border-t-brand flex-1 sm:flex-none">
+                                        <h3 className="text-text-secondary font-medium m-0 uppercase text-xs tracking-wider">Total Players</h3>
+                                        <p className="text-4xl m-0 mt-2 text-brand-light font-bold drop-shadow-md">{adminStats.total_players}</p>
+                                    </div>
+                                </div>
+
+                                <h3 className="text-xl font-medium mb-4 text-text-primary">Top 10 Leaderboard</h3>
+                                <div className="glass-card overflow-hidden">
+                                    <table className="w-full border-collapse text-left">
+                                        <thead>
+                                            <tr className="bg-neutral-bg3 border-b border-border text-sm">
+                                                <th className="p-4 font-semibold text-text-secondary">Rank</th>
+                                                <th className="p-4 font-semibold text-text-secondary">Username</th>
+                                                <th className="p-4 font-semibold text-text-secondary">Stage</th>
+                                                <th className="p-4 font-semibold text-text-secondary text-right">Score</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {adminStats.top_players.map((p, idx) => (
+                                                <motion.tr
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: idx * 0.05 }}
+                                                    key={idx}
+                                                    className="border-b border-border-subtle hover:bg-white/5 transition-colors group"
+                                                >
+                                                    <td className="p-4 text-text-muted">
+                                                        {idx === 0 ? '🏆 #1' : `#${idx + 1}`}
+                                                    </td>
+                                                    <td className="p-4 font-bold text-text-primary group-hover:text-brand-light transition-colors">{p.username}</td>
+                                                    <td className="p-4 text-text-secondary">Level {p.stage}</td>
+                                                    <td className="p-4 text-brand-light font-bold text-right">{p.score}</td>
+                                                </motion.tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                            <h3>Top 10 Leaderboard</h3>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '1rem' }}>
-                                <thead>
-                                    <tr style={{ background: '#005571', color: 'white' }}>
-                                        <th style={{ padding: '0.75rem', textAlign: 'left' }}>Rank</th>
-                                        <th style={{ padding: '0.75rem', textAlign: 'left' }}>Username</th>
-                                        <th style={{ padding: '0.75rem', textAlign: 'left' }}>Stage</th>
-                                        <th style={{ padding: '0.75rem', textAlign: 'left' }}>Score</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {adminStats.top_players.map((p, idx) => (
-                                        <tr key={idx} style={{ borderBottom: '1px solid #ddd' }}>
-                                            <td style={{ padding: '0.75rem' }}>#{idx + 1}</td>
-                                            <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>{p.username}</td>
-                                            <td style={{ padding: '0.75rem' }}>{p.stage}</td>
-                                            <td style={{ padding: '0.75rem', color: '#00bfb3', fontWeight: 'bold' }}>{p.score}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <p>Loading stats...</p>
-                    )}
-                </div>
-            ) : (
-                <>
-                    <p style={{ color: '#666' }}>Welcome to the simulation. Respond to incoming tickets and fix the ELK cluster to advance.</p>
-
-                    <div style={{ marginTop: '2rem' }}>
-                        <h2>Incident Queue</h2>
-                        {loading && <p>Loading tickets...</p>}
-                        {!loading && tickets.length === 0 && <p>Hooray! No open incidents right now.</p>}
-
-                        {tickets.filter(t => t.status === 'open').map(ticket => (
-                            <TicketItem key={ticket.id} ticket={ticket} handleValidate={handleValidate} />
-                        ))}
-
-                        {tickets.filter(t => t.status !== 'open').length > 0 && (
-                            <div style={{ marginTop: '2rem' }}>
-                                <h3>Resolved Tickets</h3>
-                                {tickets.filter(t => t.status !== 'open').map(ticket => (
-                                    <div key={ticket.id} style={{
-                                        border: '1px solid #ddd',
-                                        borderLeft: '5px solid #00bfb3',
-                                        borderRadius: '8px',
-                                        padding: '1rem',
-                                        marginBottom: '1rem',
-                                        backgroundColor: '#f9f9f9',
-                                        color: '#666'
-                                    }}>
-                                        <h4 style={{ margin: 0 }}>{ticket.subject} (Resolved)</h4>
-                                    </div>
-                                ))}
+                        ) : (
+                            <div className="glass-card p-12 text-center text-text-muted animate-pulse">
+                                Loading latest leaderboard statistics...
                             </div>
                         )}
-                    </div>
-                </>
-            )}
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="dashboard"
+                        variants={slideUp}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.1 }}
+                            className="glass-card p-6 mb-8 bg-brand-subtle border-brand/20 flex flex-col sm:flex-row items-center justify-between gap-4"
+                        >
+                            <p className="text-text-primary text-lg font-medium m-0">Welcome to the active simulation floor.</p>
+                            <span className="bg-status-success/20 text-status-success border border-status-success/30 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-status-success animate-pulse inline-block"></span>
+                                System Online
+                            </span>
+                        </motion.div>
+
+                        <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            <div className="lg:col-span-4 space-y-6">
+                                <h2 className="text-2xl font-semibold flex items-center gap-3 text-text-primary m-0">
+                                    <span className="text-brand-light">📋</span>
+                                    Incident Board
+                                </h2>
+
+                                {loading && (
+                                    <div className="glass-card p-6 text-center text-text-muted animate-pulse text-sm">
+                                        Syncing queue...
+                                    </div>
+                                )}
+
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">To Do ({openTickets.length})</h3>
+                                    {openTickets.map(ticket => (
+                                        <motion.div
+                                            key={ticket.id}
+                                            onClick={() => setSelectedTicketId(ticket.id)}
+                                            className={`p-4 rounded-xl cursor-pointer border-l-4 transition-all ${activeTicket?.id === ticket.id ? 'glass-panel border-brand shadow-glow' : 'glass-card border-status-error/50 hover:bg-white/5 opacity-80 hover:opacity-100'}`}
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                        >
+                                            <h4 className="m-0 text-text-primary text-md">{ticket.subject}</h4>
+                                            <p className="text-xs text-text-muted m-0 mt-2 truncate">Stage Level {ticket.scenario_id}</p>
+                                        </motion.div>
+                                    ))}
+                                    {openTickets.length === 0 && !loading && (
+                                        <div className="text-sm text-status-success font-medium italic p-3 border border-dashed border-status-success/30 rounded-md">Queue is empty!</div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-3 mt-6">
+                                    <h3 className="text-sm font-bold text-text-secondary uppercase tracking-wider">Done ({resolvedTickets.length})</h3>
+                                    <div className="max-h-64 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                                        {resolvedTickets.map(ticket => (
+                                            <motion.div
+                                                key={ticket.id}
+                                                onClick={() => setSelectedTicketId(ticket.id)}
+                                                className={`p-3 rounded-lg cursor-pointer border-l-4 transition-all ${activeTicket?.id === ticket.id ? 'glass-panel border-status-success bg-white/5' : 'bg-neutral-bg3 border-status-success/30 hover:bg-neutral-bg4 opacity-60 hover:opacity-100'}`}
+                                            >
+                                                <h4 className="m-0 text-text-secondary text-sm font-medium flex items-center gap-2">
+                                                    <span className="text-status-success">✓</span>
+                                                    <span className="truncate">{ticket.subject}</span>
+                                                </h4>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="lg:col-span-8">
+                                <AnimatePresence mode="wait">
+                                    {activeTicket ? (
+                                        <motion.div
+                                            key={activeTicket.id}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -20 }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <h2 className="text-2xl font-semibold mb-6 flex items-center gap-3 text-text-primary">
+                                                Active Ticket View
+                                                {activeTicket.status === 'open' ? (
+                                                    <span className="ml-auto text-xs px-3 py-1 bg-status-error/20 border border-status-error/30 text-status-error rounded-full animate-pulse">Action Required</span>
+                                                ) : (
+                                                    <span className="ml-auto text-xs px-3 py-1 bg-status-success/20 border border-status-success/30 text-status-success rounded-full">Resolved</span>
+                                                )}
+                                            </h2>
+                                            <TicketItem key={activeTicket.id} ticket={activeTicket} handleValidate={handleValidate} handleSkip={handleSkip} isSkipping={isSkipping} />
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div variants={fadeIn} initial="initial" animate="animate" className="glass-card p-12 text-center text-text-muted mt-[4.5rem]">
+                                            Select an incident from the board to view and treat it.
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
