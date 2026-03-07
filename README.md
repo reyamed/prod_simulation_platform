@@ -55,4 +55,84 @@ The scenarios are ranked progressively from Easy to Hard.
 
 ## Getting Started
 
-*(Instructions to be added as project develops)*
+Follow these instructions to set up the Elastic Simulator Platform on your local machine for development and testing purposes.
+
+### Prerequisites
+
+Ensure you have the following installed on your system:
+- **Docker & Docker Compose**: Required for standing up the Elasticsearch, Kibana, and PostgreSQL instances.
+- **Python 3.10+**: Required for the FastAPI backend and Log Generator.
+- **Node.js 18+ & npm**: Required for the React development server and frontend testing.
+- **Git**: For version control.
+
+### Installation & Setup
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/reyamed/prod_simulation_platform.git
+   cd prod_simulation_platform
+   ```
+
+2. **Start Infrastructure Services**
+   The platform relies on containerized databases and search engines. Spin them up using Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+   *Note: Ensure you have sufficient allocated RAM in your Docker desktop settings, as Elasticsearch is memory-intensive.*
+
+3. **Backend Setup**
+   Navigate to the backend directory, create a virtual environment, and install dependencies:
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
+
+4. **Frontend Setup**
+   Navigate to the frontend directory and install the required Node modules:
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+### Running the Application
+
+1. **Start the Backend Server**
+   From the `backend` directory, with your virtual environment activated, run the Uvicorn server:
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   ```
+   The API will be available at `http://localhost:8000` (interactive documentation at `/docs`).
+
+2. **Start the Frontend Development Server**
+   From the `frontend` directory, start Vite:
+   ```bash
+   npm run dev
+   ```
+   Access the user interface at `http://localhost:5173`.
+
+### Testing Pipeline
+
+The project implements a modern, comprehensive testing suite to ensure stability across the stack.
+
+- **Backend Integration & Unit Tests (Pytest)**
+  ```bash
+  cd backend
+  pytest tests/
+  ```
+- **Frontend Unit Tests (Vitest & React Testing Library)**
+  ```bash
+  cd frontend
+  npx vitest run
+  ```
+- **End-to-End Tests (Playwright)**
+  Playwright verifies the critical path by simulating real browser interactions. Ensure both the frontend and backend servers are running, then execute:
+  ```bash
+  cd e2e
+  npx playwright test
+  ```
+
+### Continuous Integration (CI)
+
+This repository includes a robust GitHub Actions pipeline (`.github/workflows/ci.yml`) that automatically evaluates the code on every push or pull request to the `develop` and `main` branches. It validates backend compliance, frontend modularity, and executes end-to-end user flows.
