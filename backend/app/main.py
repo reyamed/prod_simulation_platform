@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+﻿from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -12,10 +12,20 @@ from .database import engine, get_db
 from .auth import verify_password, get_password_hash, create_access_token
 from .config import settings
 
-# Create DB tables
-models.Base.metadata.create_all(bind=engine)
+from contextlib import asynccontextmanager
+import os
 
-app = FastAPI(title="Elastic Simulator API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create DB tables on startup, skip if we're in testing mode
+    if not os.getenv("TESTING"):
+        try:
+            models.Base.metadata.create_all(bind=engine)
+        except Exception as e:
+            print("Warning: Could not create tables on startup:", e)
+    yield
+
+app = FastAPI(title="Elastic Simulator API", lifespan=lifespan)
 
 # Configure CORS
 app.add_middleware(
