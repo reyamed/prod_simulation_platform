@@ -81,6 +81,57 @@ services:
       - elastic_sim_network
     ports:
       - "5000:5000"
+
+  # Engine Worker (Log Generator)
+  worker:
+    build:
+      context: ./backend
+    container_name: elastic_sim_worker
+    command: ["python", "worker.py"]
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql://simuser:simpassword@postgres:5432/elastic_simulator
+      - ES_HOST=http://elasticsearch:9200
+      - ES_USER=elastic
+      - ES_PASSWORD=${ELASTIC_PASSWORD:-changeme}
+      - LOGSTASH_HOST=logstash
+      - LOGSTASH_PORT=5000
+    depends_on:
+      postgres:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+      logstash:
+        condition: service_started
+    networks:
+      - elastic_sim_network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+    container_name: elastic_sim_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DATABASE_URL=postgresql://simuser:simpassword@postgres:5432/elastic_simulator
+      - ES_HOST=http://elasticsearch:9200
+      - ES_USER=elastic
+      - ES_PASSWORD=${ELASTIC_PASSWORD:-changeme}
+      - LOGSTASH_HOST=logstash
+      - LOGSTASH_PORT=5000
+    depends_on:
+      postgres:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - elastic_sim_network
+
   # Frontend Application
   frontend:
     build:
@@ -97,6 +148,7 @@ services:
       - elastic_sim_network
     depends_on:
       - postgres
+      - backend
 
 volumes:
   postgres_data:
